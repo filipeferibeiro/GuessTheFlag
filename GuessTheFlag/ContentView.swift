@@ -25,6 +25,9 @@ struct ContentView: View {
     @State private var scoreTitle = ""
     @State private var score = 0
     
+    @State private var tappedFlagIndex: Int = -1
+    @State private var animationAmount = 0.0
+    
     var body: some View {
         ZStack {
             RadialGradient(stops: [
@@ -56,6 +59,12 @@ struct ContentView: View {
                         } label: {
                             FlagImage(imageName: countries[number])
                         }
+                        .opacity(tappedFlagIndex == -1 || isTappedFlag(number) ? 1 : 0.25)
+                        .scaleEffect(tappedFlagIndex == -1 || isTappedFlag(number) ? 1 : 0.5)
+                        .rotation3DEffect(
+                            .degrees(isTappedFlag(number) ? animationAmount : .zero), axis: (x: 0, y: 1, z: 0)
+                        )
+                        .animation(number == tappedFlagIndex ? .spring(duration: 1, bounce: 0.5) : .easeOut, value: animationAmount)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -82,6 +91,9 @@ struct ContentView: View {
     }
 
     func flagTapped(_ number: Int) {
+        animationAmount += 360
+        tappedFlagIndex = number
+        
         if number == correctAnswer {
             scoreTitle = "Correct"
             score += 1
@@ -93,8 +105,18 @@ struct ContentView: View {
     }
 
     func askQuestion() {
-        countries.shuffle()
-        correctAnswer = Int.random(in: 0...2)
+        withAnimation {
+            countries.shuffle()
+            correctAnswer = Int.random(in: 0...2)
+            tappedFlagIndex = -1
+        }
+    }
+    
+    func isTappedFlag(_ number: Int) -> Bool {
+        if tappedFlagIndex == -1 { return false }
+        if tappedFlagIndex != number { return false }
+        
+        return true
     }
 
 }
